@@ -1,0 +1,12 @@
+edition: 1.0.0
+name: appName #  项目名称
+access: default #  秘钥别名
+
+services:
+  start-function:
+    component: ${path(..)}
+    props:
+      sourceCode: src
+      route:
+        - / # /index
+        - /link

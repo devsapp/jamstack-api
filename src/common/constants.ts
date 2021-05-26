@@ -1,0 +1,33 @@
+export const DEFAULT_FUNCTION_CONFIG = {
+  runtime: 'nodejs12',
+  memory: 256,
+  handler: 'index.handler',
+  timeout: 60,
+};
+export const DEFAULT_HTTP_TRIGGER_CONFIG = [
+  {
+    authType: 'anonymous',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD']
+  }
+];
+export const DEFAULT_CUSTOM_DOMAIN_CONFIG = {
+  domainName: 'auto',
+  protocol: 'HTTP'
+}
+
+
+export const SERVICE_KEYS = ['name', 'logConfig', 'vpcConfig', 'nasConfig', 'role'];
+export const FUNCIONS_KEYS = [
+  'runtime',
+  'handler',
+  'description',
+  'memorySize',
+  'timeout',
+  'initializationTimeout',
+  'initializer',
+  'instanceConcurrency',
+  'instanceType',
+  'layers',
+  'environmentVariables',
+];
+
