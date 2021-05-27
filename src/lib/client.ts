@@ -1,6 +1,5 @@
 import FC from '@alicloud/fc2';
-import { Logger } from '@serverless-devs/core';
-import { LOGGER_CONTEXT } from '../common/constants';
+import logger from '../common/logger';
 
 FC.prototype.listLayers = async function(query?, headers?) {
   let data = [];
@@ -8,7 +7,7 @@ FC.prototype.listLayers = async function(query?, headers?) {
 
   do {
     const res = await Client.fcClient.get('/layers', query, headers);
-    Logger.debug(LOGGER_CONTEXT, `get /laysers res: ${JSON.stringify(res)}`);
+    logger.debug(`get /laysers res: ${JSON.stringify(res)}`);
     
     const { layers, nextToken } = res.data;
     if (nextToken) {
