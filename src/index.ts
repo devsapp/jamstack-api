@@ -1,18 +1,20 @@
 import { cloneDeep, isEmpty } from 'lodash';
-import path from 'path';
 import { loadComponent, getCredential } from '@serverless-devs/core';
 import { detectUseOfLayer } from './lib/utils';
 import GenerateConfig from './lib/generateConfig';
-import { DEFAULT_CUSTOM_DOMAIN_CONFIG } from './common/constants';
 import Layer from './lib/layer';
 import logger from './common/logger';
-import { checkConfigYmlExist } from './lib/utils';
 
 export default class FunctionComponent {
 
   async getFcDeploy() {
     process.env['s-default-deploy-type'] = 'sdk';
     return await loadComponent('devsapp/fc-deploy');
+  }
+
+  async te() {
+  console.log('===');
+    return await getCredential('env');
   }
 
   public async deploy(inputs) {

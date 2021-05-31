@@ -1,6 +1,7 @@
 import path from 'path';
 import * as fse from 'fs-extra';
-import { commandParse, loadComponent } from '@serverless-devs/core';
+import { spawnSync } from 'child_process';
+import { commandParse, loadComponent, spinner, reportComponent } from '@serverless-devs/core';
 import _, { pick, get, defaults } from 'lodash';
 import * as constants from '../common/constants';
 import yaml from 'js-yaml';
@@ -19,9 +20,12 @@ export function instanceOfHttpTriggerConfig(data: any): data is HttpTriggerConfi
 
 export default class GenerateConfig {
 
-  static async generateConfig(inputs, common = 'deploy'): Promise<any> {
+  static async generateConfig(inputs, command = 'deploy'): Promise<any> {
     const props = inputs.props;
-    // TODO: 数据上报，参数处理
+    reportComponent('jamstack-api', {
+      uid: inputs.credential?.AccountID,
+      command,
+    })
   
     // 配置文件处理
     const functionResolvePath = path.resolve(props.sourceCode);
@@ -152,6 +156,21 @@ export default class GenerateConfig {
   }
 
   static getPrivateConfig(codeUri) {
+    const indexJsPath = path.join(codeUri, 'index.js');
+    const vm = spinner(`Execution instructions: node ${indexJsPath}`);
+    try {
+      const { status, stderr } = spawnSync(`node ${indexJsPath}`, { cwd: codeUri, shell: true });
+  
+      if (status) {
+        vm.fail();
+        logger.debug(`invoke ${codeUri} error: ${stderr.toString()}`);
+      } else {
+        vm.succeed();
+      }
+    } catch(ex) {
+      vm.fail();
+      logger.debug(`invoke ${codeUri} error: ${ex.message}`)
+    }
 
     let privateConfigYmlPath;
     try {
