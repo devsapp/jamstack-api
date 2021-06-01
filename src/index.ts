@@ -12,11 +12,6 @@ export default class FunctionComponent {
     return await loadComponent('devsapp/fc-deploy');
   }
 
-  async te() {
-  console.log('===');
-    return await getCredential('env');
-  }
-
   public async deploy(inputs) {
     if (!inputs.credentials) {
       inputs.credentials = await getCredential(inputs.project.access);
