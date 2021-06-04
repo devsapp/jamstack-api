@@ -19,45 +19,49 @@ export function instanceOfHttpTriggerConfig(data: any): data is HttpTriggerConfi
 }
 
 export default class GenerateConfig {
-
   static async generateConfig(inputs, command = 'deploy'): Promise<any> {
     const props = inputs.props;
     reportComponent('jamstack-api', {
       uid: inputs.credential?.AccountID,
       command,
-    })
-  
+    });
+
     // 配置文件处理
     const functionResolvePath = path.resolve(props.sourceCode);
-  
+
     const {
       region,
       app,
       http: publicHttp = constants.DEFAULT_HTTP_TRIGGER_CONFIG,
-    } = this.getPublishConfig(props.sourceCode);
-    logger.debug('默认配置')
+    } = this.getPublishConfig(props);
+    logger.debug('默认配置');
     logger.debug(`region: ${region}`);
     logger.debug(`app: ${JSON.stringify(app)}`);
     logger.debug(`public http: ${JSON.stringify(publicHttp)}`);
-  
+
     const service = pick(app, constants.SERVICE_KEYS);
     const publicFunctionConfig = pick(app, constants.FUNCIONS_KEYS);
-    logger.debug('配置处理')
+    logger.debug('配置处理');
     logger.debug(`serviceConfig: ${JSON.stringify(service)}`);
     logger.debug(`public functionConfig: ${JSON.stringify(publicFunctionConfig)}`);
-  
+
     const filterRoute = get(commandParse(inputs), 'data.route'); // 部署单个函数 --route index
     logger.debug(`filter route is: ${JSON.stringify(filterRoute)}`);
     logger.debug(`route: ${JSON.stringify(props.route)}`);
-    const routes = filterRoute ?
-      props.route.filter((item) => filterRoute === item.slice(1) || (item === filterRoute) || (item === '/' && filterRoute === 'index'))
+    const routes = filterRoute
+      ? props.route.filter(
+          (item) =>
+            filterRoute === item.slice(1) ||
+            item === filterRoute ||
+            (item === '/' && filterRoute === 'index'),
+        )
       : props.route;
     logger.debug(`filter route: ${JSON.stringify(routes)}`);
 
     if (_.isEmpty(routes)) {
       throw new Error('There is no route that needs to be deployed.');
     }
-  
+
     const res = [];
     const paths = [];
     // 解析配置
@@ -81,11 +85,13 @@ export default class GenerateConfig {
         const qualifier = configItem.qualifier || 'LATEST';
         delete configItem.qualifier;
         delete configItem.name;
-  
+
         if (!instanceOfHttpTriggerConfig(configItem)) {
-          throw new Error(`${routerItem} configuration does not meet expectations,code uri is ${codeUri}.`);
+          throw new Error(
+            `${routerItem} configuration does not meet expectations,code uri is ${codeUri}.`,
+          );
         }
-  
+
         return {
           name: configItem.name || qualifier,
           type: 'http',
@@ -99,17 +105,14 @@ export default class GenerateConfig {
         service,
         function: functionConfig,
         triggers,
-      })
+      });
     }
 
     return res;
   }
 
   static async getCustomDomain(inputs, region, serviceName) {
-    const {
-      customDomain = constants.DEFAULT_CUSTOM_DOMAIN_CONFIG,
-      route,
-    } = inputs.props;
+    const { customDomain = constants.DEFAULT_CUSTOM_DOMAIN_CONFIG, route } = inputs.props;
 
     if (customDomain.domainName.toUpperCase() === 'AUTO') {
       const domain = await loadComponent('devsapp/domain');
@@ -120,11 +123,11 @@ export default class GenerateConfig {
           region,
           user: inputs.credentials.AccountID,
           service: serviceName,
-          function: 'jamstack-api.system'
-        }
+          function: 'jamstack-api.system',
+        },
       });
     }
-    
+
     logger.debug(`public customDomain: ${JSON.stringify(customDomain)}`);
 
     const routeConfigs = [];
@@ -149,10 +152,12 @@ export default class GenerateConfig {
       }
     }
 
-    return [{
-      ...customDomain,
-      routeConfigs,
-    }]
+    return [
+      {
+        ...customDomain,
+        routeConfigs,
+      },
+    ];
   }
 
   static getPrivateConfig(codeUri) {
@@ -160,42 +165,43 @@ export default class GenerateConfig {
     const vm = spinner(`Execution instructions: node ${indexJsPath}`);
     try {
       const { status, stderr } = spawnSync(`node ${indexJsPath}`, { cwd: codeUri, shell: true });
-  
+
       if (status) {
         vm.fail();
         logger.debug(`invoke ${codeUri} error: ${stderr.toString()}`);
       } else {
         vm.succeed();
       }
-    } catch(ex) {
+    } catch (ex) {
       vm.fail();
-      logger.debug(`invoke ${codeUri} error: ${ex.message}`)
+      logger.debug(`invoke ${codeUri} error: ${ex.message}`);
     }
 
     let privateConfigYmlPath;
     try {
       privateConfigYmlPath = checkConfigYmlExist(codeUri);
-    // @ts-ignore
+      // @ts-ignore
     } catch (ex) {}
     if (privateConfigYmlPath) {
-      const {
-        function: privateFunctionConfig = {},
-        http: privateHttp = {},
-      } = yaml.load(fse.readFileSync(privateConfigYmlPath, 'utf8'));
+      const { function: privateFunctionConfig = {}, http: privateHttp = {} } = yaml.load(
+        fse.readFileSync(privateConfigYmlPath, 'utf8'),
+      );
 
-      return { privateFunctionConfig, privateHttp }
+      return { privateFunctionConfig, privateHttp };
     }
 
     return {
       privateFunctionConfig: {},
-    }
+    };
   }
 
-  static getPublishConfig(sourceCode) {
+  static getPublishConfig(props) {
+    const { sourceCode } = props;
     const functionResolvePath = path.resolve(sourceCode);
     const configYmlPath = checkConfigYmlExist(functionResolvePath);
 
     const configs = yaml.load(fse.readFileSync(configYmlPath, 'utf8'));
+    configs.app = { ...props.app, ...configs.app };
     if (!configs.app.name) {
       throw new Error('app name is required.');
     }

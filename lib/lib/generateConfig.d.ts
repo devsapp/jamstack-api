@@ -15,5 +15,5 @@ export default class GenerateConfig {
         privateFunctionConfig: {};
         privateHttp?: undefined;
     };
-    static getPublishConfig(sourceCode: any): any;
+    static getPublishConfig(props: any): any;
 }

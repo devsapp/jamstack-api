@@ -6,7 +6,6 @@ import Layer from './lib/layer';
 import logger from './common/logger';
 
 export default class FunctionComponent {
-
   async getFcDeploy() {
     process.env['s-default-deploy-type'] = 'sdk';
     return await loadComponent('devsapp/fc-deploy');
@@ -21,7 +20,11 @@ export default class FunctionComponent {
 
     const region = configs[0].region;
     const serviceName = configs[0].service.name;
-    const customDomains = await GenerateConfig.getCustomDomain(cloneDeep(inputs), region, serviceName);
+    const customDomains = await GenerateConfig.getCustomDomain(
+      cloneDeep(inputs),
+      region,
+      serviceName,
+    );
 
     // layer
     const functionPath = inputs.props.sourceCode;
@@ -29,7 +32,7 @@ export default class FunctionComponent {
       throw new Error('Failed to get layer configuration.');
     }
 
-    const layer = new Layer({ region, credentials: inputs.credentials })
+    const layer = new Layer({ region, credentials: inputs.credentials });
     const coreLayer = await layer.getLayerConfig(serviceName, functionPath);
     if (isEmpty(coreLayer)) {
       throw new Error('Failed to get layer configuration.');
@@ -49,13 +52,13 @@ export default class FunctionComponent {
        *    一致则使用用户的指定配置
        *    不一致则追加一个 layer 配置
        */
-       if (layers) {
+      if (layers) {
         const [arn, layerName] = coreLayer.split('#');
-        if (isEmpty(layers.filter(item => item.startsWith(`${arn}#${layerName}`)))) {
+        if (isEmpty(layers.filter((item) => item.startsWith(`${arn}#${layerName}`)))) {
           layers.push(coreLayer);
         }
       } else {
-        config.function.layers = [coreLayer]
+        config.function.layers = [coreLayer];
       }
 
       inputs.props = config;
@@ -96,10 +99,10 @@ export default class FunctionComponent {
       throw new Error('Failed to get layer configuration.');
     }
 
-    const { region, app } = GenerateConfig.getPublishConfig(inputs.props.sourceCode);
+    const { region, app } = GenerateConfig.getPublishConfig(inputs.props);
     const serviceName = app.name;
 
-    const layer = new Layer({ region, credentials: inputs.credentials })
+    const layer = new Layer({ region, credentials: inputs.credentials });
     const coreLayer = await layer.publishLayerVersion(serviceName, functionPath);
     if (isEmpty(coreLayer)) {
       throw new Error('Failed to get layer configuration.');
