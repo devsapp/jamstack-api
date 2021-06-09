@@ -1,34 +1,11 @@
-const getRawBody = require('raw-body');
+const { dk, tablestoreInitialzerPlugin } = require('@serverless-devs/dk');
 
-module.exports.handler = function (request, response, context) {
-  // get requset header
-  const reqHeader = request.headers;
-  let headerStr = ' ';
-  for (const key in reqHeader) {
-    headerStr += `${key }:${ reqHeader[key] }  `;
-  }
+const handler = dk((ctx) => {
+  console.log(ctx);
+  // 1.查询表
+  return { json: { result: 'ok' } };
+});
 
-  // get request info
-  const { url } = request;
-  const { path } = request;
-  const { queries } = request;
-  let queryStr = '';
-  for (const param in queries) {
-    queryStr += `${param }=${ queries[param] }  `;
-  }
-  const { method } = request;
-  const { clientIP } = request;
+handler.use(tablestoreInitialzerPlugin());
 
-  // get request body
-  getRawBody(request, (err, data) => {
-    const body = data;
-    // you can deal with your own logic here
-
-    // set response
-    const respBody = new Buffer(`requestHeader:${ headerStr }\n` + `url: ${ url }\n` + `path: ${ path }\n` + `queries: ${ queryStr }\n` + `method: ${ method }\n` + `clientIP: ${ clientIP }\n` + `body: ${ body }\n`);
-    response.setStatusCode(200);
-    response.setHeader('content-type', 'application/json');
-    response.send(respBody);
-  });
-};
-
+exports.handler = handler;

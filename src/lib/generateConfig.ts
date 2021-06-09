@@ -1,12 +1,19 @@
 import path from 'path';
 import * as fse from 'fs-extra';
 import { spawnSync } from 'child_process';
-import { commandParse, loadComponent, spinner, reportComponent } from '@serverless-devs/core';
-import _, { pick, get, defaults } from 'lodash';
+import {
+  commandParse,
+  loadComponent,
+  spinner,
+  reportComponent,
+  getYamlContent,
+} from '@serverless-devs/core';
+import _, { pick, get, assign } from 'lodash';
 import * as constants from '../common/constants';
 import yaml from 'js-yaml';
 import logger from '../common/logger';
 import { checkConfigYmlExist } from './utils';
+import { generateTablestoreInitializer } from '@serverless-devs/dk-deploy-common';
 
 export interface HttpTriggerConfig {
   authType: string;
@@ -74,13 +81,23 @@ export default class GenerateConfig {
 
       const codeUri = path.join(functionResolvePath, rtItem);
       const { privateFunctionConfig, privateHttp } = this.getPrivateConfig(codeUri);
+
+      await generateTablestoreInitializer(codeUri);
+
       logger.debug(`private function: ${JSON.stringify(privateFunctionConfig)}`);
       logger.debug(`private http: ${JSON.stringify(privateHttp)}`);
 
-      const functionConfig = defaults(privateFunctionConfig, publicFunctionConfig, {
-        name: rtItem,
-        codeUri,
-      });
+      const scodeUri = path.join(process.cwd(), '.s', props.sourceCode, rtItem);
+      const { function: sprivateFunctionConfig } = await getYamlContent(
+        path.join(scodeUri, 'config.yml'),
+      );
+      const functionConfig = assign(
+        { name: rtItem, codeUri: scodeUri },
+        publicFunctionConfig,
+        privateFunctionConfig,
+        sprivateFunctionConfig,
+      );
+
       const triggers = (privateHttp || publicHttp).map((configItem) => {
         const qualifier = configItem.qualifier || 'LATEST';
         delete configItem.qualifier;

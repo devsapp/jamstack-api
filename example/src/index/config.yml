@@ -1,21 +1,10 @@
-function: # 选填
-  # runtime: string # 默认：nodejs12,
-  # handler: string # 默认：index.handler
-  # description: string # 默认：''
+function:
   memorySize: 256
-  layers:
-    - dcd6a873f4f5adf7ad3375ddac7171ec#ssss#1
-    - dcd6a873f4f5adf7ad3375ddac7171ec#function-component-system-layer-jamstack-api-test#1
-  # timeout: 10
-  # initializationTimeout: 3
-  # initializer: string
-  # instanceConcurrency: 1
-  # instanceType: e1 | c1 # 默认：e1
-  # layers: string[],
-  # environmentVariables: { [key: string]: string }
-
-http: # 选填
+http:
   - authType: anonymous
     methods:
       - GET
       - POST
+      - PUT
+      - DELETE
+      - HEAD

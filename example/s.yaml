@@ -7,6 +7,10 @@ services:
     component: ${path(..)}
     props:
       sourceCode: src
+      app:
+        environmentVariables:
+          tablestore_endpoint: https://s-table-01.cn-hangzhou.ots.aliyuncs.com
+          tablestore_instanceName: s-table-01
       route:
         - / # /index
         - /link
