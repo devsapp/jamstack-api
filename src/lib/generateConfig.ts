@@ -82,18 +82,22 @@ export default class GenerateConfig {
       const codeUri = path.join(functionResolvePath, rtItem);
       const { privateFunctionConfig, privateHttp } = this.getPrivateConfig(codeUri);
 
-      await generateTablestoreInitializer(codeUri);
+      await generateTablestoreInitializer({ codeUri, props, app });
 
       logger.debug(`private function: ${JSON.stringify(privateFunctionConfig)}`);
       logger.debug(`private http: ${JSON.stringify(privateHttp)}`);
 
       const scodeUri = path.join(process.cwd(), '.s', props.sourceCode, rtItem);
-      const { function: sprivateFunctionConfig } = await getYamlContent(
-        path.join(scodeUri, 'config.yml'),
-      );
+      const spublicConfigPath = path.join(process.cwd(), '.s', props.sourceCode, 'config.yml');
+      let { app: sapp } = (await getYamlContent(spublicConfigPath)) || {};
+      const spublicFunctionConfig = pick(sapp, constants.FUNCIONS_KEYS);
+      const sservice = pick(sapp, constants.SERVICE_KEYS);
+      const { function: sprivateFunctionConfig } =
+        (await getYamlContent(path.join(scodeUri, 'config.yml'))) || {};
       const functionConfig = assign(
         { name: rtItem, codeUri: scodeUri },
         publicFunctionConfig,
+        spublicFunctionConfig,
         privateFunctionConfig,
         sprivateFunctionConfig,
       );
@@ -119,7 +123,7 @@ export default class GenerateConfig {
 
       res.push({
         region,
-        service,
+        service: { ...service, ...sservice },
         function: functionConfig,
         triggers,
       });

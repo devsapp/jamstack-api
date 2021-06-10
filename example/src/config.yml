@@ -1,11 +1,11 @@
 region: cn-shenzhen
 app:
   name: jamstack-api-test-s
-  role:
-    name: fcdeploydefaultrole-jamstack-api-test-s
-    policies:
-      - AliyunECSNetworkInterfaceManagementAccess
-      - AliyunOTSFullAccess
+  # role:
+  #   name: fcdeploydefaultrole-jamstack-api-test-s
+  #   policies:
+  #     - AliyunECSNetworkInterfaceManagementAccess
+  #     - AliyunOTSFullAccess
   # 可选服务配置 'logConfig', 'vpcConfig', 'nasConfig', 'role'
   # 可选函数配置
   # runtime: string # 默认：nodejs12,
