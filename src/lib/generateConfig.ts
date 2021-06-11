@@ -161,7 +161,7 @@ export default class GenerateConfig {
     const ssYmlContent = await getYamlContent(sspath);
     const route = get(ssYmlContent, ['services', projectName, 'props', 'route']);
     for (const item of route) {
-      if (item === '/') {
+      if (item === '/' || item === '/index') {
         routeConfigs.push({
           path: '/',
           functionName: 'index',
