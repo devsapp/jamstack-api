@@ -8,12 +8,15 @@ import {
   reportComponent,
   getYamlContent,
 } from '@serverless-devs/core';
-import _, { pick, get, assign } from 'lodash';
+import _, { pick, get, assign, replace } from 'lodash';
 import * as constants from '../common/constants';
 import yaml from 'js-yaml';
 import logger from '../common/logger';
 import { checkConfigYmlExist } from './utils';
-import { generateTablestoreInitializer } from '@serverless-devs/dk-deploy-common';
+import {
+  generateTablestoreInitializer,
+  generateHttpRouter,
+} from '@serverless-devs/dk-deploy-common';
 
 export interface HttpTriggerConfig {
   authType: string;
@@ -28,6 +31,7 @@ export function instanceOfHttpTriggerConfig(data: any): data is HttpTriggerConfi
 export default class GenerateConfig {
   static async generateConfig(inputs, command = 'deploy'): Promise<any> {
     const props = inputs.props;
+    const projectName = get(inputs, 'project.projectName');
     reportComponent('jamstack-api', {
       uid: inputs.credential?.AccountID,
       command,
@@ -81,8 +85,8 @@ export default class GenerateConfig {
 
       const codeUri = path.join(functionResolvePath, rtItem);
       const { privateFunctionConfig, privateHttp } = this.getPrivateConfig(codeUri);
-
-      await generateTablestoreInitializer({ codeUri, props, app });
+      await generateTablestoreInitializer({ codeUri, sourceCode: props.sourceCode, app });
+      await generateHttpRouter({ codeUri, routePath: rtItem, projectName });
 
       logger.debug(`private function: ${JSON.stringify(privateFunctionConfig)}`);
       logger.debug(`private http: ${JSON.stringify(privateHttp)}`);
@@ -133,7 +137,8 @@ export default class GenerateConfig {
   }
 
   static async getCustomDomain(inputs, region, serviceName) {
-    const { customDomain = constants.DEFAULT_CUSTOM_DOMAIN_CONFIG, route } = inputs.props;
+    const { customDomain = constants.DEFAULT_CUSTOM_DOMAIN_CONFIG } = inputs.props;
+    const projectName = get(inputs, 'project.projectName');
 
     if (customDomain.domainName.toUpperCase() === 'AUTO') {
       const domain = await loadComponent('devsapp/domain');
@@ -152,6 +157,9 @@ export default class GenerateConfig {
     logger.debug(`public customDomain: ${JSON.stringify(customDomain)}`);
 
     const routeConfigs = [];
+    const sspath = checkConfigYmlExist(path.resolve('.s'), 's');
+    const ssYmlContent = await getYamlContent(sspath);
+    const route = get(ssYmlContent, ['services', projectName, 'props', 'route']);
     for (const item of route) {
       if (item === '/') {
         routeConfigs.push({
@@ -167,7 +175,7 @@ export default class GenerateConfig {
       } else {
         routeConfigs.push({
           path: item,
-          functionName: item.slice(1),
+          functionName: replace(item, '/*', '').slice(1),
           serviceName,
         });
       }
