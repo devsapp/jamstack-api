@@ -82,7 +82,7 @@ export default class GenerateConfig {
       const codeUri = path.join(functionResolvePath, rtItem);
       const { privateFunctionConfig, privateHttp } = this.getPrivateConfig(codeUri);
 
-      await generateTablestoreInitializer({ codeUri, props, app });
+      await generateTablestoreInitializer({ codeUri, sourceCode: props.sourceCode, app });
 
       logger.debug(`private function: ${JSON.stringify(privateFunctionConfig)}`);
       logger.debug(`private http: ${JSON.stringify(privateHttp)}`);
