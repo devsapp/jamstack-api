@@ -14,6 +14,7 @@ import yaml from 'js-yaml';
 import logger from '../common/logger';
 import { checkConfigYmlExist } from './utils';
 import { generateTablestoreInitializer } from '@serverless-devs/dk-deploy-common';
+const dotenv = require('dotenv');
 
 export interface HttpTriggerConfig {
   authType: string;
@@ -94,12 +95,20 @@ export default class GenerateConfig {
       const sservice = pick(sapp, constants.SERVICE_KEYS);
       const { function: sprivateFunctionConfig } =
         (await getYamlContent(path.join(scodeUri, 'config.yml'))) || {};
+
+      let dotenvConfig = {};
+      if (fse.existsSync(path.resolve('.env'))) {
+        const { parsed: dotenvParsed } = dotenv.config();
+        dotenvConfig = dotenvParsed;
+      }
+
       const functionConfig = assign(
         { name: rtItem, codeUri: scodeUri },
         publicFunctionConfig,
         spublicFunctionConfig,
         privateFunctionConfig,
         sprivateFunctionConfig,
+        dotenvConfig,
       );
 
       const triggers = (privateHttp || publicHttp).map((configItem) => {
