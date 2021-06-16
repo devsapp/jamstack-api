@@ -96,19 +96,12 @@ export default class GenerateConfig {
       const { function: sprivateFunctionConfig } =
         (await getYamlContent(path.join(scodeUri, 'config.yml'))) || {};
 
-      let dotenvConfig = {};
-      if (fse.existsSync(path.resolve('.env'))) {
-        const { parsed: dotenvParsed } = dotenv.config();
-        dotenvConfig = dotenvParsed;
-      }
-
       const functionConfig = assign(
         { name: rtItem, codeUri: scodeUri },
         publicFunctionConfig,
         spublicFunctionConfig,
         privateFunctionConfig,
         sprivateFunctionConfig,
-        dotenvConfig,
       );
 
       const triggers = (privateHttp || publicHttp).map((configItem) => {
@@ -130,10 +123,15 @@ export default class GenerateConfig {
         };
       });
 
+      const { parsed: dotenvParsed } = dotenv.config();
+
       res.push({
         region,
         service: { ...service, ...sservice },
-        function: functionConfig,
+        function: {
+          ...functionConfig,
+          environmentVariables: { ...functionConfig.environmentVariables, ...dotenvParsed },
+        },
         triggers,
       });
     }
