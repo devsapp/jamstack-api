@@ -13,8 +13,7 @@ import * as constants from '../common/constants';
 import yaml from 'js-yaml';
 import logger from '../common/logger';
 import { checkConfigYmlExist } from './utils';
-import { generateTablestoreInitializer } from '@serverless-devs/dk-deploy-common';
-const dotenv = require('dotenv');
+import { generateTablestoreInitializer, getEnvs } from '@serverless-devs/dk-deploy-common';
 
 export interface HttpTriggerConfig {
   authType: string;
@@ -123,14 +122,12 @@ export default class GenerateConfig {
         };
       });
 
-      const { parsed: dotenvParsed } = dotenv.config();
-
       res.push({
         region,
         service: { ...service, ...sservice },
         function: {
           ...functionConfig,
-          environmentVariables: { ...functionConfig.environmentVariables, ...dotenvParsed },
+          environmentVariables: { ...functionConfig.environmentVariables, ...getEnvs() },
         },
         triggers,
       });
