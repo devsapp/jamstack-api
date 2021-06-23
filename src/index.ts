@@ -1,12 +1,9 @@
 import { cloneDeep, isEmpty } from 'lodash';
-import path from 'path';
 import { loadComponent, getCredential } from '@serverless-devs/core';
 import { detectUseOfLayer } from './lib/utils';
 import GenerateConfig from './lib/generateConfig';
-import { DEFAULT_CUSTOM_DOMAIN_CONFIG } from './common/constants';
 import Layer from './lib/layer';
 import logger from './common/logger';
-import { checkConfigYmlExist } from './lib/utils';
 
 export default class FunctionComponent {
 
@@ -16,6 +13,7 @@ export default class FunctionComponent {
   }
 
   public async deploy(inputs) {
+    console.log(inputs);
     if (!inputs.credentials) {
       inputs.credentials = await getCredential(inputs.project.access);
     }

@@ -1,10 +1,22 @@
 Type: Component
 Name: jamstack-api
-Provider:
-  - 其它
-Version: 0.0.1
+Version: 0.0.2
 Description: 初始化component模板
-HomePage: https://www.serverless-devs.com
-Tags: #标签详情
+HomePage: 'https://www.serverless-devs.com'
+Tags:
   - 模板
-Category: 其它
+Properties:
+  sourceCode:
+    Description: 源码地址
+    Required: true
+    Example: ''
+    Default: ''
+    Type:
+      - String
+  route:
+    Description: 路由
+    Required: true
+    Example: ''
+    Default: ''
+    Type:
+      - 'List<String>[路由路径]'
