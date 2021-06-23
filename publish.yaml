@@ -1,6 +1,8 @@
 Type: Component
 Name: jamstack-api
-Version: 0.0.2
+Provider:
+  - 其它
+Version: 0.0.10
 Description: 初始化component模板
 HomePage: 'https://www.serverless-devs.com'
 Tags:

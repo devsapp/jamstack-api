@@ -1,13 +1,11 @@
+const { dk, tablestoreInitialzerPlugin } = require('@serverless-devs/dk');
 
-const { http } = require('@serverless-devs/dk');
-
-const handler = http.onRequest({
-  handler: (request) => {
-    console.log(request);
-    return {
-      json: { result: 'hello link' },
-    };
-  },
+const handler = dk((ctx) => {
+  console.log(ctx);
+  // 1.查询表
+  return { json: { result: 'ok' } };
 });
+
+handler.use(tablestoreInitialzerPlugin());
 
 exports.handler = handler;
