@@ -12,7 +12,6 @@ export default class FunctionComponent {
   }
 
   public async deploy(inputs) {
-    console.log(inputs);
     if (!inputs.credentials) {
       inputs.credentials = await getCredential(inputs.project.access);
     }
