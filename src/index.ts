@@ -99,7 +99,7 @@ export default class FunctionComponent {
       throw new Error('Failed to get layer configuration.');
     }
 
-    const { region, app } = GenerateConfig.getPublishConfig(inputs.props);
+    const { region, app } = inputs.props;
     const serviceName = app.name;
 
     const layer = new Layer({ region, credentials: inputs.credentials });

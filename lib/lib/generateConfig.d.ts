@@ -8,12 +8,4 @@ export declare function instanceOfHttpTriggerConfig(data: any): data is HttpTrig
 export default class GenerateConfig {
     static generateConfig(inputs: any, command?: string): Promise<any>;
     static getCustomDomain(inputs: any, region: any, serviceName: any): Promise<any[]>;
-    static getPrivateConfig(codeUri: any): {
-        privateFunctionConfig: any;
-        privateHttp: any;
-    } | {
-        privateFunctionConfig: {};
-        privateHttp?: undefined;
-    };
-    static getPublishConfig(props: any): any;
 }

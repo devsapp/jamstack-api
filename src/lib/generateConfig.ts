@@ -1,18 +1,13 @@
 import path from 'path';
-import * as fse from 'fs-extra';
-import { spawnSync } from 'child_process';
 import {
   commandParse,
   loadComponent,
-  spinner,
   reportComponent,
   getYamlContent,
 } from '@serverless-devs/core';
 import _, { pick, get, assign } from 'lodash';
 import * as constants from '../common/constants';
-import yaml from 'js-yaml';
 import logger from '../common/logger';
-import { checkConfigYmlExist } from './utils';
 import { generateTablestoreInitializer, getEnvs } from '@serverless-devs/dk-deploy-common';
 
 export interface HttpTriggerConfig {
@@ -27,7 +22,8 @@ export function instanceOfHttpTriggerConfig(data: any): data is HttpTriggerConfi
 
 export default class GenerateConfig {
   static async generateConfig(inputs, command = 'deploy'): Promise<any> {
-    const props = inputs.props;
+    const projectName = get(inputs, 'project.projectName');
+    const { props } = inputs;
     reportComponent('jamstack-api', {
       uid: inputs.credential?.AccountID,
       command,
@@ -38,14 +34,14 @@ export default class GenerateConfig {
 
     const {
       region,
-      app,
+      app: originApp,
       http: publicHttp = constants.DEFAULT_HTTP_TRIGGER_CONFIG,
-    } = this.getPublishConfig(props);
+    } = props;
+    const app = { ...constants.DEFAULT_SERVICE, ...originApp };
     logger.debug('默认配置');
     logger.debug(`region: ${region}`);
     logger.debug(`app: ${JSON.stringify(app)}`);
     logger.debug(`public http: ${JSON.stringify(publicHttp)}`);
-
     const service = pick(app, constants.SERVICE_KEYS);
     const publicFunctionConfig = pick(app, constants.FUNCIONS_KEYS);
     logger.debug('配置处理');
@@ -56,12 +52,10 @@ export default class GenerateConfig {
     logger.debug(`filter route is: ${JSON.stringify(filterRoute)}`);
     logger.debug(`route: ${JSON.stringify(props.route)}`);
     const routes = filterRoute
-      ? props.route.filter(
-          (item) =>
-            filterRoute === item.slice(1) ||
-            item === filterRoute ||
-            (item === '/' && filterRoute === 'index'),
-        )
+      ? props.route.filter((item) => {
+          const formatRoute = path.join('/', filterRoute);
+          return formatRoute === item || (item === '/' && formatRoute === '/index');
+        })
       : props.route;
     logger.debug(`filter route: ${JSON.stringify(routes)}`);
 
@@ -70,37 +64,29 @@ export default class GenerateConfig {
     }
 
     const res = [];
-    const paths = [];
     // 解析配置
     for (const routerItem of routes) {
       const rtItem = (routerItem === '/' ? '/index' : routerItem).slice(1);
-      if (paths.includes(rtItem)) {
-        throw new Error('The same route exists.');
-      }
-      paths.push(rtItem);
-
       const codeUri = path.join(functionResolvePath, rtItem);
-      const { privateFunctionConfig, privateHttp } = this.getPrivateConfig(codeUri);
 
       await generateTablestoreInitializer({ codeUri, sourceCode: props.sourceCode, app });
+
+      const spath = path.join(process.cwd(), '.s');
+      const scodeUri = path.join(spath, props.sourceCode, rtItem);
+      const scontent = await getYamlContent(path.join(spath, 's.yml'));
+      const sapp = get(scontent, ['services', projectName, 'props', 'app']);
+      const sservice = pick(sapp, constants.SSERVICE_KEYS);
+
+      const privateConfig = await getYamlContent(path.join(scodeUri, 'config.yml'));
+      const { function: privateFunctionConfig, http: privateHttp } = privateConfig || {};
 
       logger.debug(`private function: ${JSON.stringify(privateFunctionConfig)}`);
       logger.debug(`private http: ${JSON.stringify(privateHttp)}`);
 
-      const scodeUri = path.join(process.cwd(), '.s', props.sourceCode, rtItem);
-      const spublicConfigPath = path.join(process.cwd(), '.s', props.sourceCode, 'config.yml');
-      let { app: sapp } = (await getYamlContent(spublicConfigPath)) || {};
-      const spublicFunctionConfig = pick(sapp, constants.FUNCIONS_KEYS);
-      const sservice = pick(sapp, constants.SERVICE_KEYS);
-      const { function: sprivateFunctionConfig } =
-        (await getYamlContent(path.join(scodeUri, 'config.yml'))) || {};
-
       const functionConfig = assign(
         { name: rtItem, codeUri: scodeUri },
         publicFunctionConfig,
-        spublicFunctionConfig,
         privateFunctionConfig,
-        sprivateFunctionConfig,
       );
 
       const triggers = (privateHttp || publicHttp).map((configItem) => {
@@ -124,7 +110,10 @@ export default class GenerateConfig {
 
       res.push({
         region,
-        service: { ...service, ...sservice },
+        service: {
+          ...service,
+          ...sservice,
+        },
         function: {
           ...functionConfig,
           environmentVariables: { ...functionConfig.environmentVariables, ...getEnvs() },
@@ -132,7 +121,6 @@ export default class GenerateConfig {
         triggers,
       });
     }
-
     return res;
   }
 
@@ -183,53 +171,5 @@ export default class GenerateConfig {
         routeConfigs,
       },
     ];
-  }
-
-  static getPrivateConfig(codeUri) {
-    const indexJsPath = path.join(codeUri, 'index.js');
-    const vm = spinner(`Execution instructions: node ${indexJsPath}`);
-    try {
-      const { status, stderr } = spawnSync(`node ${indexJsPath}`, { cwd: codeUri, shell: true });
-
-      if (status) {
-        vm.fail();
-        logger.debug(`invoke ${codeUri} error: ${stderr.toString()}`);
-      } else {
-        vm.succeed();
-      }
-    } catch (ex) {
-      vm.fail();
-      logger.debug(`invoke ${codeUri} error: ${ex.message}`);
-    }
-
-    let privateConfigYmlPath;
-    try {
-      privateConfigYmlPath = checkConfigYmlExist(codeUri);
-      // @ts-ignore
-    } catch (ex) {}
-    if (privateConfigYmlPath) {
-      const { function: privateFunctionConfig = {}, http: privateHttp = {} } = yaml.load(
-        fse.readFileSync(privateConfigYmlPath, 'utf8'),
-      );
-
-      return { privateFunctionConfig, privateHttp };
-    }
-
-    return {
-      privateFunctionConfig: {},
-    };
-  }
-
-  static getPublishConfig(props) {
-    const { sourceCode } = props;
-    const functionResolvePath = path.resolve(sourceCode);
-    const configYmlPath = checkConfigYmlExist(functionResolvePath);
-
-    const configs = yaml.load(fse.readFileSync(configYmlPath, 'utf8'));
-    configs.app = { ...props.app, ...configs.app };
-    if (!configs.app.name) {
-      throw new Error('app name is required.');
-    }
-    return configs;
   }
 }
