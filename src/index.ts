@@ -1,9 +1,10 @@
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, get } from 'lodash';
 import { loadComponent, getCredential } from '@serverless-devs/core';
 import { detectUseOfLayer } from './lib/utils';
 import GenerateConfig from './lib/generateConfig';
 import Layer from './lib/layer';
 import logger from './common/logger';
+import * as constants from './common/constants';
 
 export default class FunctionComponent {
   async getFcDeploy() {
@@ -100,7 +101,7 @@ export default class FunctionComponent {
     }
 
     const { region, app } = inputs.props;
-    const serviceName = app.name;
+    const serviceName = get(app, 'name', constants.DEFAULT_SERVICE.name);
 
     const layer = new Layer({ region, credentials: inputs.credentials });
     const coreLayer = await layer.publishLayerVersion(serviceName, functionPath);
