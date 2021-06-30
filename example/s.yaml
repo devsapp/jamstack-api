@@ -6,11 +6,13 @@ services:
   start-function:
     component: ${path(..)}
     props:
-      sourceCode: src
+      region: 'cn-shenzhen'
       app:
+        name: 'my-jamstack-demo'
         environmentVariables:
           tablestore_endpoint: https://s-table-01.cn-hangzhou.ots.aliyuncs.com
           tablestore_instanceName: s-table-01
+      sourceCode: src
       route:
         - / # /index
         - /link
