@@ -13,6 +13,7 @@ export default class FunctionComponent {
   }
 
   public async deploy(inputs) {
+    console.log('本地jamstack-api组件');
     if (!inputs.credentials) {
       inputs.credentials = await getCredential(inputs.project.access);
     }
@@ -21,7 +22,7 @@ export default class FunctionComponent {
 
     const region = configs[0].region;
     const serviceName = configs[0].service.name;
-    const customDomains = await GenerateConfig.getCustomDomain(
+    const { customDomains, domainName } = await GenerateConfig.getCustomDomain(
       cloneDeep(inputs),
       region,
       serviceName,
@@ -67,7 +68,7 @@ export default class FunctionComponent {
       res.push(await fcDeploy.deploy(inputs));
     }
 
-    return res;
+    return { customDomain: domainName, response: res };
   }
 
   public async remove(inputs) {

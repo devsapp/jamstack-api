@@ -164,12 +164,14 @@ export default class GenerateConfig {
         });
       }
     }
-
-    return [
-      {
-        ...customDomain,
-        routeConfigs,
-      },
-    ];
+    return {
+      customDomains: [
+        {
+          ...customDomain,
+          routeConfigs,
+        },
+      ],
+      domainName: customDomain.domainName,
+    };
   }
 }
