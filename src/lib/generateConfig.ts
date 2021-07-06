@@ -4,6 +4,7 @@ import {
   loadComponent,
   reportComponent,
   getYamlContent,
+  colors,
 } from '@serverless-devs/core';
 import _, { pick, get, assign } from 'lodash';
 import * as constants from '../common/constants';
@@ -125,7 +126,12 @@ export default class GenerateConfig {
   }
 
   static async getCustomDomain(inputs, region, serviceName) {
-    const { customDomain = constants.DEFAULT_CUSTOM_DOMAIN_CONFIG, route } = inputs.props;
+    const {
+      customDomain = constants.DEFAULT_CUSTOM_DOMAIN_CONFIG,
+      route,
+      bucket,
+      project,
+    } = inputs.props;
 
     if (customDomain.domainName.toUpperCase() === 'AUTO') {
       const domain = await loadComponent('devsapp/domain');
@@ -139,6 +145,22 @@ export default class GenerateConfig {
           function: 'jamstack-api.system',
         },
       });
+      if (bucket) {
+        const jamstackDomain = await domain.jamstack({
+          ...inputs,
+          props: {
+            type: 'jamstack-fc',
+            region,
+            user: inputs.credentials.AccountID,
+            service: serviceName,
+            function: 'jamstack-api.system',
+            bucket,
+            customDomain: customDomain.domainName,
+            project,
+          },
+        });
+        logger.log(`\njamstackDomain: ${colors.cyan.underline(`http://${jamstackDomain}`)}`);
+      }
     }
 
     logger.debug(`public customDomain: ${JSON.stringify(customDomain)}`);

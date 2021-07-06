@@ -13,7 +13,6 @@ export default class FunctionComponent {
   }
 
   public async deploy(inputs) {
-    console.log('本地jamstack-api组件');
     if (!inputs.credentials) {
       inputs.credentials = await getCredential(inputs.project.access);
     }
