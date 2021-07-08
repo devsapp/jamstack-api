@@ -10,6 +10,7 @@ import _, { pick, get, assign } from 'lodash';
 import * as constants from '../common/constants';
 import logger from '../common/logger';
 import { generateTablestoreInitializer, getEnvs } from '@serverless-devs/dk-deploy-common';
+import AddEdgeScript from './cdn/addEdgeScript';
 
 export interface HttpTriggerConfig {
   authType: string;
@@ -132,6 +133,7 @@ export default class GenerateConfig {
       bucket,
       project,
     } = inputs.props;
+    const { credentials } = inputs;
 
     if (customDomain.domainName.toUpperCase() === 'AUTO') {
       const domain = await loadComponent('devsapp/domain');
@@ -140,7 +142,7 @@ export default class GenerateConfig {
         props: {
           type: 'fc',
           region,
-          user: inputs.credentials.AccountID,
+          user: credentials.AccountID,
           service: serviceName,
           function: 'jamstack-api.system',
         },
@@ -151,7 +153,7 @@ export default class GenerateConfig {
           props: {
             type: 'jamstack-fc',
             region,
-            user: inputs.credentials.AccountID,
+            user: credentials.AccountID,
             service: serviceName,
             function: 'jamstack-api.system',
             bucket,
@@ -160,6 +162,12 @@ export default class GenerateConfig {
           },
         });
         logger.log(`\njamstackDomain: ${colors.cyan.underline(`http://${jamstackDomain}`)}`);
+
+        const addEdgeScript = new AddEdgeScript(
+          credentials.AccessKeyID,
+          credentials.AccessKeySecret,
+        );
+        await addEdgeScript.init({ domain: jamstackDomain, fcDomain: customDomain.domainName });
       }
     }
 
