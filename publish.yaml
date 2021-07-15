@@ -1,13 +1,15 @@
 Type: Component
 Name: jamstack-api
-Provider:
-  - 其它
 Version: 0.0.16
-Description: 初始化component模板
+Category: 其他
 HomePage: 'https://www.serverless-devs.com'
 Tags:
   - 模板
-Category: 其它
+Description: 函数部署
+Commands:
+  deploy: 部署
+  remove: 移除
+  publicLayerVersion: 更新层
 Properties:
   sourceCode:
     Description: 源码地址
