@@ -1,6 +1,6 @@
 import Client from './client';
-import { waitUntil } from '../../common/utils';
-import { get, find } from 'lodash';
+import { sleep } from '../../common/utils';
+import { spinner } from '@serverless-devs/core';
 
 export default class addEdgeScript {
   private client: Client;
@@ -12,17 +12,16 @@ export default class addEdgeScript {
       domain,
       rule: `if match_re($uri, '^/api') {\n rewrite(concat('http://${fcDomain}', substr($uri, 5, len($uri))), 'redirect')\n}`,
     });
-    await waitUntil(
-      async () => {
-        return await this.client.describeCdnDomainStagingConfig(domain);
-      },
-      (result) => {
-        const domainConfigs = get(result, 'body.domainConfigs');
-        const edge = find(domainConfigs, (item) => item.functionName === 'edge_function');
-        return get(edge, 'status') === 'success';
-      },
-      { timeInterval: 500 },
-    );
-    await this.client.publishEsStagingConfigToProduction(domain);
+    const spin = spinner('configuring edge script...');
+    for (let i = 0; i < 5; i++) {
+      try {
+        await sleep(5000);
+        await this.client.publishEsStagingConfigToProduction(domain);
+        break;
+      } catch (e) {
+        await sleep(2000);
+      }
+    }
+    spin.succeed('edge script configured successfully');
   }
 }
