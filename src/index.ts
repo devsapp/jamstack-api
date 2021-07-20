@@ -69,6 +69,12 @@ export default class FunctionComponent extends BaseComponent {
       res.push(await fcDeploy.deploy(inputs));
     }
 
+    super.__report({
+      name: 'jamstack-api',
+      access: inputs.project.access,
+      content: res,
+    });
+
     return { customDomain: domainName, response: res };
   }
 
