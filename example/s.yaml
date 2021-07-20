@@ -6,7 +6,7 @@ services:
   start-function:
     component: ${path(..)}
     props:
-      region: 'cn-shenzhen'
+      region: 'cn-hangzhou'
       app:
         name: 'my-jamstack-demo'
         environmentVariables:

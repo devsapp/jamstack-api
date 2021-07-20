@@ -5,14 +5,16 @@ import GenerateConfig from './lib/generateConfig';
 import Layer from './lib/layer';
 import logger from './common/logger';
 import * as constants from './common/constants';
+import BaseComponent from './common/base';
+import { InputProps } from './common/entity';
 
-export default class FunctionComponent {
+export default class FunctionComponent extends BaseComponent {
   async getFcDeploy() {
     process.env['s-default-deploy-type'] = 'sdk';
     return await loadComponent('devsapp/fc-deploy');
   }
 
-  public async deploy(inputs) {
+  public async deploy(inputs: InputProps) {
     if (!inputs.credentials) {
       inputs.credentials = await getCredential(inputs.project.access);
     }
@@ -70,7 +72,7 @@ export default class FunctionComponent {
     return { customDomain: domainName, response: res };
   }
 
-  public async remove(inputs) {
+  public async remove(inputs: InputProps) {
     if (!inputs.credentials) {
       inputs.credentials = await getCredential(inputs.project.access);
     }
@@ -90,7 +92,7 @@ export default class FunctionComponent {
     await fcDeploy.remove(inputs);
   }
 
-  public async publicLayerVersion(inputs) {
+  public async publicLayerVersion(inputs: InputProps) {
     if (!inputs.credentials) {
       inputs.credentials = await getCredential(inputs.project.access);
     }
