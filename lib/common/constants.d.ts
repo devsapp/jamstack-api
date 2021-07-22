@@ -7,7 +7,7 @@ export declare const DEFAULT_FUNCTION_CONFIG: {
 export declare const DEFAULT_HTTP_TRIGGER_CONFIG: {
     authType: string;
     methods: string[];
-}[];
+};
 export declare const DEFAULT_CUSTOM_DOMAIN_CONFIG: {
     domainName: string;
     protocol: string;

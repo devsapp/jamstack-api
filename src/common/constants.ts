@@ -4,19 +4,17 @@ export const DEFAULT_FUNCTION_CONFIG = {
   handler: 'index.handler',
   timeout: 60,
 };
-export const DEFAULT_HTTP_TRIGGER_CONFIG = [
-  {
-    authType: 'anonymous',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
-  },
-];
+export const DEFAULT_HTTP_TRIGGER_CONFIG = {
+  authType: 'anonymous',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
+};
 export const DEFAULT_CUSTOM_DOMAIN_CONFIG = {
   domainName: 'auto',
   protocol: 'HTTP',
 };
 
 export const DEFAULT_SERVICE = {
-  name: 'jamstack-api-demo',
+  name: 'jamstack-api-service',
 };
 
 export const SERVICE_KEYS = ['name', 'logConfig', 'vpcConfig', 'nasConfig', 'role'];

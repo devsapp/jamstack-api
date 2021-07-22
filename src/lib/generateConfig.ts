@@ -1,10 +1,12 @@
 import path from 'path';
+import { spawnSync } from 'child_process';
 import {
   commandParse,
   loadComponent,
   reportComponent,
   getYamlContent,
   colors,
+  spinner,
 } from '@serverless-devs/core';
 import _, { pick, get, assign } from 'lodash';
 import * as constants from '../common/constants';
@@ -18,8 +20,20 @@ export interface HttpTriggerConfig {
   name?: string;
   qualifier?: string;
 }
+export interface IOssTriggerConfig {
+  bucketName: string;
+  events: string[];
+  filter: {
+    prefix: string;
+    suffix: string;
+  };
+}
 export function instanceOfHttpTriggerConfig(data: any): data is HttpTriggerConfig {
   return 'authType' in data && 'methods' in data;
+}
+
+export function instanceOfIOssTriggerConfig(data: any): data is IOssTriggerConfig {
+  return 'bucketName' in data && 'events' in data && 'filter' in data;
 }
 
 export default class GenerateConfig {
@@ -34,11 +48,7 @@ export default class GenerateConfig {
     // 配置文件处理
     const functionResolvePath = path.resolve(props.sourceCode);
 
-    const {
-      region,
-      app: originApp,
-      http: publicHttp = constants.DEFAULT_HTTP_TRIGGER_CONFIG,
-    } = props;
+    const { region, app: originApp, http: publicHttp } = props;
     const app = { ...constants.DEFAULT_SERVICE, ...originApp };
     logger.debug('默认配置');
     logger.debug(`region: ${region}`);
@@ -70,7 +80,7 @@ export default class GenerateConfig {
     for (const routerItem of routes) {
       const rtItem = (routerItem === '/' ? '/index' : routerItem).slice(1);
       const codeUri = path.join(functionResolvePath, rtItem);
-
+      await this.execIndexjs(codeUri);
       await generateTablestoreInitializer({ codeUri, sourceCode: props.sourceCode, app });
 
       const spath = path.join(process.cwd(), '.s');
@@ -91,23 +101,10 @@ export default class GenerateConfig {
         privateFunctionConfig,
       );
 
-      const triggers = (privateHttp || publicHttp).map((configItem) => {
-        const qualifier = configItem.qualifier || 'LATEST';
-        delete configItem.qualifier;
-        delete configItem.name;
-
-        if (!instanceOfHttpTriggerConfig(configItem)) {
-          throw new Error(
-            `${routerItem} configuration does not meet expectations,code uri is ${codeUri}.`,
-          );
-        }
-
-        return {
-          name: configItem.name || qualifier,
-          type: 'http',
-          qualifier: qualifier,
-          config: configItem,
-        };
+      const triggers = await this.getTriggers({
+        codeUri,
+        http: privateHttp || publicHttp,
+        routerItem,
       });
 
       res.push({
@@ -121,18 +118,14 @@ export default class GenerateConfig {
           environmentVariables: { ...functionConfig.environmentVariables, ...getEnvs() },
         },
         triggers,
+        routerItem,
       });
     }
     return res;
   }
 
   static async getCustomDomain(inputs, region, serviceName) {
-    const {
-      customDomain = constants.DEFAULT_CUSTOM_DOMAIN_CONFIG,
-      route,
-      bucket,
-      project,
-    } = inputs.props;
+    const { customDomain = constants.DEFAULT_CUSTOM_DOMAIN_CONFIG, bucket, project } = inputs.props;
     const { credentials } = inputs;
 
     if (customDomain.domainName.toUpperCase() === 'AUTO') {
@@ -172,36 +165,62 @@ export default class GenerateConfig {
     }
 
     logger.debug(`public customDomain: ${JSON.stringify(customDomain)}`);
-
-    const routeConfigs = [];
-    for (const item of route) {
-      if (item === '/') {
-        routeConfigs.push({
-          path: '/',
-          functionName: 'index',
-          serviceName,
-        });
-        routeConfigs.push({
-          path: '/index',
-          functionName: 'index',
-          serviceName,
-        });
-      } else {
-        routeConfigs.push({
-          path: item,
-          functionName: item.slice(1),
-          serviceName,
-        });
-      }
-    }
     return {
-      customDomains: [
-        {
-          ...customDomain,
-          routeConfigs,
-        },
-      ],
+      customDomain,
       domainName: customDomain.domainName,
     };
+  }
+
+  static async execIndexjs(codeUri) {
+    const indexJsPath = path.join(codeUri, 'index.js');
+    const vm = spinner(`Execution instructions: node ${indexJsPath}`);
+    try {
+      const { status, stderr } = spawnSync(`node ${indexJsPath}`, { cwd: codeUri, shell: true });
+
+      if (status) {
+        vm.fail();
+        logger.debug(`invoke ${codeUri} error: ${stderr.toString()}`);
+      } else {
+        vm.succeed();
+      }
+    } catch (ex) {
+      vm.fail();
+      logger.debug(`invoke ${codeUri} error: ${ex.message}`);
+    }
+  }
+
+  static async getTriggers({ codeUri, http, routerItem }) {
+    function throwError() {
+      throw new Error(
+        `${routerItem} configuration does not meet expectations,code uri is ${codeUri}.`,
+      );
+    }
+    const configContent = await getYamlContent(path.join(codeUri, 'config.yml'));
+    if (configContent) {
+      // oss触发器
+      if ('oss' in configContent) {
+        const { oss } = configContent;
+        if (!instanceOfIOssTriggerConfig(oss)) throwError();
+        return {
+          name: 'ossTrigger',
+          type: 'oss',
+          config: oss,
+        };
+      }
+    } else {
+      //不存在，默认http函数
+      const qualifier = get(http, 'qualifier', 'LATEST');
+      const config = http
+        ? pick(http, ['authType', 'methods'])
+        : constants.DEFAULT_HTTP_TRIGGER_CONFIG;
+
+      if (!instanceOfHttpTriggerConfig(config)) throwError();
+      return {
+        name: http?.name || qualifier,
+        type: 'http',
+        qualifier,
+        config,
+      };
+    }
   }
 }

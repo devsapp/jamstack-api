@@ -1,4 +1,4 @@
-import { cloneDeep, isEmpty, get } from 'lodash';
+import { cloneDeep, isEmpty, get, find } from 'lodash';
 import { loadComponent, getCredential } from '@serverless-devs/core';
 import { detectUseOfLayer } from './lib/utils';
 import GenerateConfig from './lib/generateConfig';
@@ -14,21 +14,53 @@ export default class FunctionComponent extends BaseComponent {
     return await loadComponent('devsapp/fc-deploy');
   }
 
+  private formatHttpConfig({ configs, serviceName }) {
+    const routeConfigs = [];
+    for (const config of configs) {
+      if (config.triggers.type === 'http') {
+        if (config.routerItem === '/') {
+          routeConfigs.push({
+            path: '/',
+            functionName: 'index',
+            serviceName,
+          });
+          routeConfigs.push({
+            path: '/index',
+            functionName: 'index',
+            serviceName,
+          });
+        } else {
+          routeConfigs.push({
+            path: config.routerItem,
+            functionName: config.routerItem.slice(1),
+            serviceName,
+          });
+        }
+      }
+    }
+    return routeConfigs;
+  }
+
   public async deploy(inputs: InputProps) {
     if (!inputs.credentials) {
       inputs.credentials = await getCredential(inputs.project.access);
     }
 
     const configs = await GenerateConfig.generateConfig(cloneDeep(inputs));
-
     const region = configs[0].region;
     const serviceName = configs[0].service.name;
-    const { customDomains, domainName } = await GenerateConfig.getCustomDomain(
-      cloneDeep(inputs),
-      region,
-      serviceName,
-    );
-
+    const useHttp = find(configs, (item) => item.triggers.type === 'http');
+    let customDomain: object;
+    let domainName: string;
+    if (useHttp) {
+      const domainConfig = await GenerateConfig.getCustomDomain(
+        cloneDeep(inputs),
+        region,
+        serviceName,
+      );
+      customDomain = domainConfig.customDomain;
+      domainName = domainConfig.domainName;
+    }
     // layer
     const functionPath = inputs.props.sourceCode;
     if (!detectUseOfLayer(functionPath)) {
@@ -44,10 +76,18 @@ export default class FunctionComponent extends BaseComponent {
 
     const fcDeploy = await this.getFcDeploy();
     const res = [];
+    const routeConfigs = this.formatHttpConfig({ configs, serviceName });
     for (const config of configs) {
-      config.customDomains = customDomains;
-      const { layers } = config.function;
+      if (config.triggers.type === 'http') {
+        config.customDomains = [
+          {
+            ...customDomain,
+            routeConfigs,
+          },
+        ];
+      }
 
+      const { layers } = config.function;
       /**
        * 查看是否配置了 layer
        *  如果没有配置则直接使用 layer
@@ -63,7 +103,7 @@ export default class FunctionComponent extends BaseComponent {
       } else {
         config.function.layers = [coreLayer];
       }
-
+      config.triggers = [config.triggers];
       inputs.props = config;
       inputs.args = inputs.args.includes('--debug') ? '--debug' : '';
       res.push(await fcDeploy.deploy(inputs));
@@ -75,7 +115,7 @@ export default class FunctionComponent extends BaseComponent {
       content: res,
     });
 
-    return { customDomain: domainName, response: res };
+    return useHttp ? { customDomain: domainName, 'fc-deploy-response': res } : res;
   }
 
   public async remove(inputs: InputProps) {
