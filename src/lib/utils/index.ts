@@ -1,33 +1,23 @@
 import { execSync } from 'child_process';
-import { get } from 'lodash';
 import path from 'path';
 import fse from 'fs-extra';
 import { spinner } from '@serverless-devs/core';
 import logger from '../../common/logger';
 
-const layerPackageName = '@serverless-devs/dk';
-
 export function getCoreVerison(cwd) {
   const vm = spinner('get core verison');
   try {
-    const verisonStr = execSync(`npm ls --json ${layerPackageName}`, {
-      cwd,
-    }).toString();
-    const version = get(JSON.parse(verisonStr), `dependencies.${layerPackageName}.version`);
+    let version: any = execSync('npm view @serverless-devs/dk version', { cwd });
     vm.succeed();
-    return version;
-  } catch(ex) {
+    return version.toString().replace(/\n/g, '');
+  } catch (ex) {
     vm.fail();
     throw ex;
   }
 }
 
 export function detectUseOfLayer(functionPath = 'src') {
-  const {
-    functionResolvePath,
-    layerPackagePath,
-    layerModulesPath,
-  } = getLayerPaths(functionPath);
+  const { functionResolvePath, layerPackagePath, layerModulesPath } = getLayerPaths(functionPath);
 
   try {
     if (!fse.statSync(layerPackagePath).isFile()) {
@@ -43,8 +33,10 @@ export function detectUseOfLayer(functionPath = 'src') {
     } else {
       throw '';
     }
-  } catch(ex) {
-    throw new Error(`检测 ${layerModulesPath} 是否是目录失败，建议在 ${functionResolvePath} 目录执行 npm i 后再尝试`);
+  } catch (ex) {
+    throw new Error(
+      `检测 ${layerModulesPath} 是否是目录失败，建议在 ${functionResolvePath} 目录执行 npm i 后再尝试`,
+    );
   }
 }
 
@@ -57,9 +49,8 @@ export function getLayerPaths(functionPath = 'src') {
     functionResolvePath,
     layerPackagePath,
     layerModulesPath,
-  }
+  };
 }
-
 
 // 检测 config yaml 是否存在
 export function checkConfigYmlExist(ymlDirName, ymlName = 'config') {
