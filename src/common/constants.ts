@@ -1,6 +1,6 @@
 export const DEFAULT_FUNCTION_CONFIG = {
   runtime: 'nodejs12',
-  memory: 256,
+  memorySize: 512,
   handler: 'index.handler',
   timeout: 60,
 };

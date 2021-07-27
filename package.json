@@ -35,7 +35,6 @@
     "@alicloud/cdn20180510": "1.0.2",
     "@alicloud/fc2": "^2.2.2",
     "@alicloud/openapi-client": "^0.3.0",
-    "@serverless-devs/core": "latest",
     "@serverless-devs/dk-deploy-common": "latest",
     "chillout": "^5.0.0",
     "fs-extra": "^10.0.0",

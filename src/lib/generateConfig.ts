@@ -11,7 +11,11 @@ import {
 import _, { pick, get, assign } from 'lodash';
 import * as constants from '../common/constants';
 import logger from '../common/logger';
-import { generateTablestoreInitializer, getEnvs } from '@serverless-devs/dk-deploy-common';
+import {
+  generateTablestoreInitializer,
+  getEnvs,
+  generateOssEvent,
+} from '@serverless-devs/dk-deploy-common';
 import AddEdgeScript from './cdn/addEdgeScript';
 
 export interface HttpTriggerConfig {
@@ -82,6 +86,7 @@ export default class GenerateConfig {
       const codeUri = path.join(functionResolvePath, rtItem);
       await this.execIndexjs(codeUri);
       await generateTablestoreInitializer({ codeUri, sourceCode: props.sourceCode, app });
+      await generateOssEvent({ codeUri, sourceCode: props.sourceCode, app });
 
       const spath = path.join(process.cwd(), '.s');
       const scodeUri = path.join(spath, props.sourceCode, rtItem);
@@ -96,6 +101,7 @@ export default class GenerateConfig {
       logger.debug(`private http: ${JSON.stringify(privateHttp)}`);
 
       const functionConfig = assign(
+        constants.DEFAULT_FUNCTION_CONFIG,
         { name: rtItem, codeUri: scodeUri },
         publicFunctionConfig,
         privateFunctionConfig,

@@ -1,6 +1,6 @@
 export declare const DEFAULT_FUNCTION_CONFIG: {
     runtime: string;
-    memory: number;
+    memorySize: number;
     handler: string;
     timeout: number;
 };
