@@ -17,6 +17,7 @@ import {
   generateOssEvent,
 } from '@serverless-devs/dk-deploy-common';
 import AddEdgeScript from './cdn/addEdgeScript';
+import fs from 'fs-extra';
 
 export interface HttpTriggerConfig {
   authType: string;
@@ -87,6 +88,8 @@ export default class GenerateConfig {
       await this.execIndexjs(codeUri);
       await generateTablestoreInitializer({ codeUri, sourceCode: props.sourceCode, app });
       await generateOssEvent({ codeUri, sourceCode: props.sourceCode, app });
+      const configPath = path.join(codeUri, 'config.yml');
+      fs.existsSync(configPath) && fs.unlinkSync(configPath);
 
       const spath = path.join(process.cwd(), '.s');
       const scodeUri = path.join(spath, props.sourceCode, rtItem);
