@@ -21,7 +21,8 @@ export default class GenerateConfig {
         domainName: any;
     }>;
     static execIndexjs(codeUri: any): Promise<void>;
-    static getTriggers({ codeUri, http, routerItem }: {
+    static getTriggers({ scodeUri, codeUri, http, routerItem }: {
+        scodeUri: any;
         codeUri: any;
         http: any;
         routerItem: any;

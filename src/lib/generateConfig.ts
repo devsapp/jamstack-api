@@ -111,11 +111,11 @@ export default class GenerateConfig {
       );
 
       const triggers = await this.getTriggers({
+        scodeUri,
         codeUri,
         http: privateHttp || publicHttp,
         routerItem,
       });
-
       res.push({
         region,
         service: {
@@ -198,13 +198,13 @@ export default class GenerateConfig {
     }
   }
 
-  static async getTriggers({ codeUri, http, routerItem }) {
+  static async getTriggers({ scodeUri, codeUri, http, routerItem }) {
     function throwError() {
       throw new Error(
         `${routerItem} configuration does not meet expectations,code uri is ${codeUri}.`,
       );
     }
-    const configContent = await getYamlContent(path.join(codeUri, 'config.yml'));
+    const configContent = await getYamlContent(path.join(scodeUri, 'config.yml'));
     if (configContent) {
       // oss触发器
       if ('oss' in configContent) {
