@@ -42,7 +42,7 @@ export default class FunctionComponent extends BaseComponent {
   }
 
   public async deploy(inputs: InputProps) {
-    if (!inputs.credentials) {
+    if (isEmpty(inputs.credentials)) {
       inputs.credentials = await getCredential(inputs.project.access);
     }
 

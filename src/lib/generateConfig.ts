@@ -11,11 +11,7 @@ import {
 import _, { pick, get, assign } from 'lodash';
 import * as constants from '../common/constants';
 import logger from '../common/logger';
-import {
-  generateTablestoreInitializer,
-  getEnvs,
-  generateOssEvent,
-} from '@serverless-devs/dk-deploy-common';
+import { generateFile, getEnvs } from '@serverless-devs/dk-deploy-common';
 import AddEdgeScript from './cdn/addEdgeScript';
 import fs from 'fs-extra';
 
@@ -86,8 +82,7 @@ export default class GenerateConfig {
       const rtItem = (routerItem === '/' ? '/index' : routerItem).slice(1);
       const codeUri = path.join(functionResolvePath, rtItem);
       await this.execIndexjs(codeUri);
-      await generateTablestoreInitializer({ codeUri, sourceCode: props.sourceCode, app });
-      await generateOssEvent({ codeUri, sourceCode: props.sourceCode, app });
+      await generateFile({ codeUri, sourceCode: props.sourceCode, app });
       const configPath = path.join(codeUri, 'config.yml');
       fs.existsSync(configPath) && fs.unlinkSync(configPath);
 
