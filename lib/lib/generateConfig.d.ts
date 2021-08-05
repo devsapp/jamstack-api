@@ -14,6 +14,7 @@ export interface IOssTriggerConfig {
 }
 export declare function instanceOfHttpTriggerConfig(data: any): data is HttpTriggerConfig;
 export declare function instanceOfIOssTriggerConfig(data: any): data is IOssTriggerConfig;
+export declare function instanceOfISchedulerTriggerConfig(data: any): data is IOssTriggerConfig;
 export default class GenerateConfig {
     static generateConfig(inputs: any, command?: string): Promise<any>;
     static getCustomDomain(inputs: any, region: any, serviceName: any): Promise<{

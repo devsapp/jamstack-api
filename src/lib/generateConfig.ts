@@ -37,6 +37,10 @@ export function instanceOfIOssTriggerConfig(data: any): data is IOssTriggerConfi
   return 'bucketName' in data && 'events' in data && 'filter' in data;
 }
 
+export function instanceOfISchedulerTriggerConfig(data: any): data is IOssTriggerConfig {
+  return 'cronExpression' in data && 'enable' in data && 'payload' in data;
+}
+
 export default class GenerateConfig {
   static async generateConfig(inputs, command = 'deploy'): Promise<any> {
     const projectName = get(inputs, 'project.projectName');
@@ -99,12 +103,12 @@ export default class GenerateConfig {
       logger.debug(`private http: ${JSON.stringify(privateHttp)}`);
 
       const functionConfig = assign(
+        {},
         constants.DEFAULT_FUNCTION_CONFIG,
         { name: rtItem, codeUri: scodeUri },
         publicFunctionConfig,
         privateFunctionConfig,
       );
-
       const triggers = await this.getTriggers({
         scodeUri,
         codeUri,
@@ -200,7 +204,7 @@ export default class GenerateConfig {
       );
     }
     const configContent = (await getYamlContent(path.join(scodeUri, 'config.yml'))) || {};
-    // oss触发器
+    // oss 触发器
     if ('oss' in configContent) {
       const { oss } = configContent;
       if (!instanceOfIOssTriggerConfig(oss)) throwError();
@@ -208,6 +212,16 @@ export default class GenerateConfig {
         name: 'ossTrigger',
         type: 'oss',
         config: oss,
+      };
+    }
+    // scheduler 触发器
+    if ('scheduler' in configContent) {
+      const { scheduler } = configContent;
+      if (!instanceOfISchedulerTriggerConfig(scheduler)) throwError();
+      return {
+        name: 'timerTrigger',
+        type: 'timer',
+        config: scheduler,
       };
     }
 
