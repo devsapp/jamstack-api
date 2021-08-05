@@ -199,32 +199,30 @@ export default class GenerateConfig {
         `${routerItem} configuration does not meet expectations,code uri is ${codeUri}.`,
       );
     }
-    const configContent = await getYamlContent(path.join(scodeUri, 'config.yml'));
-    if (configContent) {
-      // oss触发器
-      if ('oss' in configContent) {
-        const { oss } = configContent;
-        if (!instanceOfIOssTriggerConfig(oss)) throwError();
-        return {
-          name: 'ossTrigger',
-          type: 'oss',
-          config: oss,
-        };
-      }
-    } else {
-      //不存在，默认http函数
-      const qualifier = get(http, 'qualifier', 'LATEST');
-      const config = http
-        ? pick(http, ['authType', 'methods'])
-        : constants.DEFAULT_HTTP_TRIGGER_CONFIG;
-
-      if (!instanceOfHttpTriggerConfig(config)) throwError();
+    const configContent = (await getYamlContent(path.join(scodeUri, 'config.yml'))) || {};
+    // oss触发器
+    if ('oss' in configContent) {
+      const { oss } = configContent;
+      if (!instanceOfIOssTriggerConfig(oss)) throwError();
       return {
-        name: http?.name || qualifier,
-        type: 'http',
-        qualifier,
-        config,
+        name: 'ossTrigger',
+        type: 'oss',
+        config: oss,
       };
     }
+
+    //不存在，默认http函数
+    const qualifier = get(http, 'qualifier', 'LATEST');
+    const config = http
+      ? pick(http, ['authType', 'methods'])
+      : constants.DEFAULT_HTTP_TRIGGER_CONFIG;
+
+    if (!instanceOfHttpTriggerConfig(config)) throwError();
+    return {
+      name: http?.name || qualifier,
+      type: 'http',
+      qualifier,
+      config,
+    };
   }
 }
