@@ -19,7 +19,7 @@ export default class Layer {
     
     for (const layerItem of listLayers) {
       if (layerItem.layerName === layerName) {
-        return layerItem.Arn;
+        return layerItem.Arn || layerItem.arn;
       }
     }
 
@@ -56,7 +56,8 @@ export default class Layer {
     const zipFile = fse.readFileSync(path.join(zipPath, 'catch.zip'), 'base64');
     fse.removeSync(zipPath);
 
-    const { Arn } = await Client.fcClient.publishLayerVersion(layerName, {
+    // 由于返回的 arn 字段发生改变，此处做一下兼容
+    const { arn, Arn } = await Client.fcClient.publishLayerVersion(layerName, {
       code: { zipFile },
       description: JSON.stringify({ version: coreVersion }),
       compatibleRuntime: [
@@ -67,6 +68,6 @@ export default class Layer {
       ]
     });
     
-    return Arn;
+    return arn || Arn;
   }
 }
