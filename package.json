@@ -23,30 +23,33 @@
   },
   "scripts": {
     "start": "npm run watch",
-    "watch": "tsc -w && npm run doc",
+    "watch": "rm -rf lib && tsc -w",
     "publish": "npm run build && s cli platform publish",
-    "build": "tsc",
+    "prebuild": "rm -rf lib",
+    "build": "ncc build src/index.ts -m -e @serverless-devs/core -e @alicloud/openapi-client -e @serverless-devs/dk-deploy-common -o lib",
     "test": "jest ./test/index.test.ts",
     "test:cov": "jest --coverage",
     "f2elint-scan": "f2elint scan",
-    "f2elint-fix": "f2elint fix"
+    "f2elint-fix": "f2elint fix",
+    "update": "rm -rf package-lock.json && rm -rf node_modules && npm install"
   },
   "dependencies": {
+    "@serverless-devs/dk-deploy-common": "latest",
+    "@alicloud/openapi-client": "^0.3.0"
+  },
+  "devDependencies": {
     "@alicloud/cdn20180510": "1.0.2",
     "@alicloud/fc2": "^2.2.2",
-    "@alicloud/openapi-client": "^0.3.0",
     "@serverless-devs/core": "latest",
-    "@serverless-devs/dk-deploy-common": "latest",
     "chillout": "^5.0.0",
     "fs-extra": "^10.0.0",
     "js-yaml": "^4.0.0",
-    "lodash": "^4.4.2"
-  },
-  "devDependencies": {
+    "lodash": "^4.4.2",
     "@types/fs-extra": "^9.0.11",
     "@types/jest": "^26.0.10",
     "@types/lodash": "^4.14.168",
     "@types/node": "^12.12.6",
+    "@vercel/ncc": "^0.29.2",
     "f2elint": "^1.1.2",
     "git-cz": "^4.7.6",
     "husky": "^7.0.1",

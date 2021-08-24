@@ -1,7 +1,0 @@
-node_modules/
-build/
-lib/
-test/
-**/*.min.js
-**/*-min.js
-**/*.bundle.js
