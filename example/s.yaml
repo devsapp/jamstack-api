@@ -3,16 +3,12 @@ name: appName #  项目名称
 access: default #  秘钥别名
 
 services:
-  start-function:
-    component: ${path(..)}
+  rest-api:
+    component: ../lib
     props:
-      region: 'cn-hangzhou'
+      region: cn-hangzhou
       app:
-        name: 'my-jamstack-demo'
-        environmentVariables:
-          tablestore_endpoint: https://s-table-01.cn-hangzhou.ots.aliyuncs.com
-          tablestore_instanceName: s-table-01
-      sourceCode: src
+        name: rest-api-demo
+      sourceCode: functions
       route:
-        - / # /index
-        - /link
+        - /index
