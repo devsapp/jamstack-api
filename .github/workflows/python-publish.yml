@@ -26,7 +26,7 @@ jobs:
           npm install --production
       - name: Add publish file
         run: |
-          wget https://aidankun.oss-cn-hangzhou.aliyuncs.com/hub-publish.py
+          wget https://serverless-registry.oss-cn-hangzhou.aliyuncs.com/publish-file/hub-publish.py
           ls
       - name: Publish package
         env:
