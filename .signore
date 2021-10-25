@@ -1,6 +1,3 @@
-os: wind32
-
-os: yunxiao|github.s
 tsconfig.json
 tsconfig.base.json
 LICENSE
